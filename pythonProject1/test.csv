@@ -1,0 +1,101 @@
+;id;arrival_time;assigned_cp;charged_at_cp;onsite;kwh_capacity;kwh_SoC;visited_company;waiting_time;waiting_time_overdue;leaving_time;inital_kwh_SoC;time_to_stay;energy_charged;served_at_pool;served_at_destination_company
+0;1;833;;3.0;False;60;60.0;Steffies Cocktails;0;True;930;32;97;50540;True;False
+1;2;677;;;False;60;26.0;Schönheits-chirurg;0;True;755;26;78;0;False;False
+2;3;683;;;False;60;26.0;Schönheits-chirurg;0;True;747;26;64;0;False;False
+3;4;644;;4.0;False;60;60.5;Steffies Cocktails;0;False;740;22;96;67124;True;False
+4;5;780;;;False;60;33.0;Schönheits-chirurg;0;True;880;33;100;0;False;False
+5;6;558;;1.0;False;60;60.5;Schönheits-chirurg;0;False;628;28;70;42103;False;True
+6;7;842;;6.0;False;60;60.5;Steffies Cocktails;0;True;957;37;115;69882;False;True
+7;8;666;;4.0;False;60;47.0;Schönheits-chirurg;0;True;765;34;99;19565;False;True
+8;9;742;;4.0;False;60;49.0;Steffies Cocktails;0;True;822;20;80;46023;True;False
+9;10;702;;;False;60;27.0;Schönheits-chirurg;0;True;775;27;73;0;False;False
+10;11;822;;4.0;False;60;60.5;Schönheits-chirurg;0;False;894;26;72;62634;False;True
+11;12;575;;2.0;False;60;60.5;Schönheits-chirurg;0;False;683;23;108;68561;False;True
+12;13;697;;;False;60;31.0;Schönheits-chirurg;0;True;759;31;62;0;False;False
+13;14;693;;;False;60;32.0;Schönheits-chirurg;0;True;796;32;103;0;False;False
+14;15;799;;;False;60;27.0;Schönheits-chirurg;0;True;867;27;68;0;False;False
+15;16;643;;1.0;False;60;60.5;Schönheits-chirurg;0;False;738;22;95;66288;False;True
+16;17;707;;1.0;False;60;43.5;Steffies Cocktails;0;True;770;27;63;24882;True;False
+17;18;658;;2.0;False;60;60.5;Schönheits-chirurg;0;True;760;35;102;56277;False;True
+18;19;722;;2.0;False;60;45.0;Schönheits-chirurg;0;True;789;30;67;23235;False;True
+19;20;760;;1.0;False;60;54.5;Steffies Cocktails;0;True;822;28;62;42188;True;False
+20;21;642;;10.0;False;60;60.5;Steffies Cocktails;0;False;737;21;95;66192;False;True
+21;22;800;;1.0;False;60;55.0;Steffies Cocktails;0;True;875;28;75;45819;True;False
+22;23;783;;2.0;False;60;60.5;Steffies Cocktails;0;True;870;27;87;68019;True;False
+23;24;755;;;False;60;30.0;Steffies Cocktails;0;True;865;30;110;0;False;False
+24;25;783;;2.0;False;60;27.5;Steffies Cocktails;0;True;870;27;87;870;True;False
+25;26;672;;10.0;False;60;52.5;Steffies Cocktails;0;True;777;32;105;31037;False;True
+26;27;711;;10.0;False;60;58.0;Steffies Cocktails;0;True;814;39;103;30229;False;True
+27;28;654;;5.0;False;60;60.5;Schönheits-chirurg;0;False;722;38;68;47472;False;True
+28;29;701;;5.0;False;60;57.0;Schönheits-chirurg;0;True;773;31;72;38870;False;True
+29;30;757;;5.0;False;60;60.5;Steffies Cocktails;0;True;848;39;91;61598;True;False
+30;31;671;;;False;60;26.0;Schönheits-chirurg;0;True;789;26;118;0;False;False
+31;32;692;;;False;60;30.0;Schönheits-chirurg;0;True;770;30;78;0;False;False
+32;33;671;;;False;60;26.0;Schönheits-chirurg;0;True;789;26;118;0;False;False
+33;34;660;;;False;60;24.0;Schönheits-chirurg;0;True;776;24;116;0;False;False
+34;35;673;;;False;60;30.0;Schönheits-chirurg;0;True;792;30;119;0;False;False
+35;36;719;;;False;60;36.0;Steffies Cocktails;0;True;789;36;70;0;False;False
+36;37;641;;9.0;False;60;60.5;Steffies Cocktails;0;False;705;31;64;43745;False;True
+37;38;736;;10.0;False;60;38.0;Schönheits-chirurg;0;True;817;36;81;3262;True;False
+38;39;836;;5.0;False;60;60.5;Steffies Cocktails;0;True;927;29;91;71000;True;False
+39;40;771;;10.0;False;60;42.5;Schönheits-chirurg;0;True;853;24;82;30895;True;False
+40;41;706;;;False;60;18.0;Steffies Cocktails;0;True;782;18;76;0;False;False
+41;42;657;;;False;60;28.0;Steffies Cocktails;0;True;699;28;42;0;False;False
+42;43;667;;9.0;False;60;47.5;Steffies Cocktails;0;True;755;22;88;37230;False;True
+43;44;838;;10.0;False;60;60.5;Steffies Cocktails;0;True;965;34;127;102717;False;True
+44;45;723;;9.0;False;60;43.0;Steffies Cocktails;0;True;782;29;59;21518;False;True
+45;46;675;;;False;60;42.0;Schönheits-chirurg;0;True;771;42;96;0;False;False
+46;47;733;;9.0;False;60;52.0;Schönheits-chirurg;0;True;835;25;102;43659;True;False
+47;48;867;;2.0;False;60;60.5;Schönheits-chirurg;0;True;935;29;68;59565;False;True
+48;49;728;;;False;60;31.0;Steffies Cocktails;0;True;811;31;83;0;False;False
+49;50;763;;9.0;False;60;27.0;Steffies Cocktails;0;True;836;26;73;1671;False;True
+50;51;741;;;False;60;34.0;Schönheits-chirurg;0;True;835;34;94;0;False;False
+51;52;695;;;False;60;34.0;Schönheits-chirurg;0;True;799;34;104;0;False;False
+52;53;640;;8.0;False;60;60.5;Steffies Cocktails;0;False;729;22;89;61605;False;True
+53;54;695;;8.0;False;60;60.5;Schönheits-chirurg;0;True;799;34;104;54244;True;False
+54;55;705;;8.0;False;60;33.5;Steffies Cocktails;0;True;799;33;94;799;False;True
+55;56;761;;8.0;False;60;37.0;Schönheits-chirurg;0;True;820;26;59;17809;True;False
+56;57;778;;8.0;False;60;57.5;Steffies Cocktails;0;True;874;30;96;46585;False;True
+57;58;785;;9.0;False;60;43.5;Steffies Cocktails;0;True;862;30;77;22923;False;True
+58;59;739;;;False;60;37.0;Steffies Cocktails;0;True;830;37;91;0;False;False
+59;60;781;;9.0;False;60;44.0;Schönheits-chirurg;0;True;881;34;100;17430;True;False
+60;61;667;;;False;60;22.0;Steffies Cocktails;0;True;755;22;88;0;False;False
+61;62;807;;8.0;False;60;43.0;Steffies Cocktails;0;True;903;28;96;26655;False;True
+62;63;755;;;False;60;30.0;Steffies Cocktails;0;True;865;30;110;0;False;False
+63;64;699;;;False;60;30.0;Schönheits-chirurg;0;True;782;30;83;0;False;False
+64;65;754;;1.0;False;60;32.5;Schönheits-chirurg;0;True;883;28;129;7911;False;True
+65;66;714;;;False;60;19.0;Steffies Cocktails;0;True;808;19;94;0;False;False
+66;67;799;;;False;60;27.0;Schönheits-chirurg;0;True;867;27;68;0;False;False
+67;68;826;;9.0;False;60;48.0;Steffies Cocktails;0;True;918;29;92;34181;False;True
+68;69;872;;1.0;False;60;60.5;Steffies Cocktails;0;True;956;27;84;68043;True;False
+69;70;622;;7.0;False;60;60.5;Steffies Cocktails;0;False;719;34;97;65709;False;True
+70;71;618;;6.0;False;60;60.5;Steffies Cocktails;0;False;718;35;100;67468;False;True
+71;72;684;;6.0;False;60;60.5;Steffies Cocktails;0;True;805;27;121;67012;False;True
+72;73;731;;6.0;False;60;39.0;Schönheits-chirurg;0;True;818;32;87;11361;True;False
+73;74;781;;6.0;False;60;60.5;Schönheits-chirurg;0;True;881;34;100;54368;True;False
+74;75;742;;;False;60;20.0;Steffies Cocktails;0;True;822;20;80;0;False;False
+75;76;578;;3.0;False;60;60.5;Schönheits-chirurg;0;False;680;28;102;64787;False;True
+76;77;698;;7.0;False;60;56.0;Schönheits-chirurg;0;True;772;29;74;40257;True;False
+77;78;777;;;False;60;27.0;Steffies Cocktails;0;True;850;27;73;0;False;False
+78;79;736;;7.0;False;60;59.0;Schönheits-chirurg;0;True;817;36;81;36547;True;False
+79;80;773;;7.0;False;60;53.5;Steffies Cocktails;0;True;863;30;90;39480;False;True
+80;81;704;;;False;60;31.0;Schönheits-chirurg;0;True;791;31;87;0;False;False
+81;82;705;;;False;60;33.0;Steffies Cocktails;0;True;799;33;94;0;False;False
+82;83;733;;;False;60;25.0;Schönheits-chirurg;0;True;835;25;102;0;False;False
+83;84;748;;;False;60;29.0;Steffies Cocktails;0;True;854;29;106;0;False;False
+84;85;733;;;False;60;25.0;Schönheits-chirurg;0;True;835;25;102;0;False;False
+85;86;728;;;False;60;31.0;Steffies Cocktails;0;True;811;31;83;0;False;False
+86;87;673;;3.0;False;60;60.5;Schönheits-chirurg;0;True;792;30;119;83168;False;True
+87;88;746;;3.0;False;60;57.0;Schönheits-chirurg;0;True;837;34;91;37467;False;True
+88;89;728;;;False;60;31.0;Steffies Cocktails;0;True;811;31;83;0;False;False
+89;90;799;;3.0;False;60;42.5;Schönheits-chirurg;0;True;867;27;68;26412;False;True
+90;91;803;;7.0;False;60;47.0;Steffies Cocktails;0;True;902;27;99;35300;False;True
+91;92;732;;;False;60;20.0;Steffies Cocktails;0;True;859;20;127;0;False;False
+92;93;693;;;False;60;32.0;Schönheits-chirurg;0;True;796;32;103;0;False;False
+93;94;675;;;False;60;42.0;Schönheits-chirurg;0;True;771;42;96;0;False;False
+94;95;749;;3.0;False;60;29.5;Steffies Cocktails;0;True;869;28;120;2604;True;False
+95;96;725;;;False;60;35.0;Steffies Cocktails;0;True;814;35;89;0;False;False
+96;97;695;;;False;60;34.0;Schönheits-chirurg;0;True;799;34;104;0;False;False
+97;98;723;;;False;60;29.0;Steffies Cocktails;0;True;782;29;59;0;False;False
+98;99;676;;;False;60;29.0;Schönheits-chirurg;0;True;773;29;97;0;False;False
+99;100;768;;3.0;False;60;40.0;Schönheits-chirurg;0;True;874;37;106;5229;False;True
