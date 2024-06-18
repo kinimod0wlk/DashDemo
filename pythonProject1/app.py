@@ -8,7 +8,9 @@ import pandas as pd
 df1 = pd.read_csv('result1.csv', delimiter=';')
 df2 = pd.read_csv('result2.csv', delimiter=';')
 
-# Convert columns to appropriate types
+GRID_LIMIT = 1000
+
+# Convert columns
 def preprocess(df):
     df['time'] = df['time'].astype(int)
     df['vehicle'] = df['vehicle'].astype(str)
@@ -18,9 +20,8 @@ def preprocess(df):
     df['vehicle_charge'] = df['vehicle_charge'].str.replace(',', '.').astype(float)
     df['vehicle_capacity'] = df['vehicle_capacity'].str.replace(',', '.').astype(float)
     df['cp_charge_increment'] = df['cp_charge_increment'].str.replace(',', '.').astype(float)
-    df['time_minute'] = df['time'] // 60
-    df['time_of_day'] = pd.to_datetime(df['time'], unit='m', origin='2024-01-01').dt.strftime('%H:%M')
-    df['half_hour'] = (df['time'] // 30) % 48
+    df['time_minute'] = df['time'] / 60
+    df['time_of_day'] = pd.to_datetime(df['time_minute'], unit='m', origin='2024-01-01').dt.strftime('%H:%M')
     return df
 
 df1 = preprocess(df1)
@@ -30,7 +31,7 @@ df2 = preprocess(df2)
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
 
-# Define the KPI functions
+# KPI functions
 def calculate_kpis(df):
     total_energy_used = df['cp_charging_rate'].sum()
     cars_charged = df[df['vehicle_charge'] > 0]['vehicle'].nunique()
@@ -41,11 +42,6 @@ def calculate_kpis(df):
 dashboard_layout = html.Div([
     html.H1("Dashboard"),
     html.Div(id='kpis'),
-    html.Div([
-        dcc.Link('Charging Infrastructure', href='/charging-infrastructure'),
-        dcc.Link('Cars', href='/cars'),
-        dcc.Link('Charging Station', href='/charging-station'),
-    ])
 ])
 
 # Charging Infrastructure Layout
@@ -74,17 +70,13 @@ charging_infrastructure_layout = html.Div([
         options=[
             {'label': 'Total Energy Used', 'value': 'total_energy'},
             {'label': 'CP Target Power', 'value': 'target_power'},
-            {'label': 'CP Charging Rate', 'value': 'charging_rate'}
+            {'label': 'CP Charging Rate', 'value': 'charging_rate'},
+            {'label': 'Grid Limit', 'value': 'grid_limit'}
         ],
         value=['total_energy'],
         labelStyle={'display': 'inline-block'}
     ),
-    dcc.Graph(id='infrastructure-graph'),
-    html.Div([
-        dcc.Link('Dashboard', href='/'),
-        dcc.Link('Cars', href='/cars'),
-        dcc.Link('Charging Station', href='/charging-station'),
-    ])
+    html.Div(id='infrastructure-graph-container'),
 ])
 
 # Cars Layout
@@ -115,12 +107,7 @@ cars_layout = html.Div([
         value=['total_energy'],
         labelStyle={'display': 'inline-block'}
     ),
-    dcc.Graph(id='car-graph'),
-    html.Div([
-        dcc.Link('Dashboard', href='/'),
-        dcc.Link('Charging Infrastructure', href='/charging-infrastructure'),
-        dcc.Link('Charging Station', href='/charging-station'),
-    ])
+    html.Div(id='car-graph-container'),
 ])
 
 # Charging Station Layout
@@ -150,15 +137,10 @@ charging_station_layout = html.Div([
         value=['total_energy'],
         labelStyle={'display': 'inline-block'}
     ),
-    dcc.Graph(id='station-graph'),
-    html.Div([
-        dcc.Link('Dashboard', href='/'),
-        dcc.Link('Charging Infrastructure', href='/charging-infrastructure'),
-        dcc.Link('Cars', href='/cars'),
-    ])
+    html.Div(id='station-graph-container'),
 ])
 
-# Define the layout with a location component and header
+# Layout with location component and header
 app.layout = html.Div([
     html.Div([
         dcc.Link('Dashboard', href='/'),
@@ -170,7 +152,7 @@ app.layout = html.Div([
     html.Div(id='page-content')
 ])
 
-# Define the callbacks for page navigation
+# Callbacks for page navigation
 @app.callback(Output('page-content', 'children'),
               Input('url', 'pathname'))
 def display_page(pathname):
@@ -203,113 +185,176 @@ def update_kpis(pathname):
             html.P(f"Amount of Cars not charged: {cars_not_charged_2}"),
         ])
 
-# Define the callback to update the graph in the Charging Infrastructure tab
+# Callback to update the graph in the Charging Infrastructure tab
 @app.callback(
-    Output('infrastructure-graph', 'figure'),
+    Output('infrastructure-graph-container', 'children'),
     [Input('data-toggle-infrastructure', 'value'),
      Input('view-toggle-infrastructure', 'value'),
      Input('graph-toggle-infrastructure', 'value')]
 )
-def update_infrastructure_graph(datasets, view, graphs):
+def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
     data_map = {'df1': df1, 'df2': df2}
     traces = []
 
     def create_traces(df, dataset_name, line_style):
         trace_list = []
-        if 'total_energy' in graphs:
-            total_energy = df.groupby('half_hour')['cp_charging_rate'].sum()
-            trace_list.append(go.Scatter(x=total_energy.index, y=total_energy, mode='lines', name=f'{dataset_name} - Total Energy Used', line=line_style))
-        if 'target_power' in graphs:
-            target_power = df.groupby('half_hour')['cp_target_power'].mean()
+        if 'total_energy' in graph_toggle:
+            df_sorted = df.sort_values(by='time_of_day')
+            total_energy = df_sorted.groupby('time_of_day')['cp_charging_rate'].sum().cumsum()
+            trace_list.append(go.Bar(x=total_energy.index, y=total_energy, name=f'{dataset_name} - Cumulative Total Energy Used'))
+        if 'target_power' in graph_toggle:
+            target_power = df.groupby('time_of_day')['cp_target_power'].mean()
             trace_list.append(go.Scatter(x=target_power.index, y=target_power, mode='lines', name=f'{dataset_name} - CP Target Power', line=line_style))
-        if 'charging_rate' in graphs:
-            charging_rate = df.groupby('half_hour')['cp_charging_rate'].mean()
+        if 'charging_rate' in graph_toggle:
+            charging_rate = df.groupby('time_of_day')['cp_charging_rate'].mean()
             trace_list.append(go.Scatter(x=charging_rate.index, y=charging_rate, mode='lines', name=f'{dataset_name} - CP Charging Rate', line=line_style))
+        if 'grid_limit' in graph_toggle:
+            trace_list.append(go.Scatter(x=df['time_of_day'].unique(), y=[GRID_LIMIT]*len(df['time_of_day'].unique()), mode='lines', name='Grid Limit', line={'dash': 'dash'}))
         return trace_list
 
-    if view == 'combined':
-        for dataset in datasets:
-            traces.extend(create_traces(data_map[dataset], dataset, {'dash': 'solid'}))
-    else:
-        for i, dataset in enumerate(datasets):
-            line_style = {'dash': 'solid'} if i == 0 else {'dash': 'dot'}
-            traces.extend(create_traces(data_map[dataset], dataset, line_style))
+    graphs = []
+    if view_toggle == 'combined':
+        for dataset in data_toggle:
+            df = data_map[dataset]
+            traces.extend(create_traces(df, dataset, {'dash': 'solid'}))
+        layout = go.Layout(
+            title='Charging Infrastructure Data',
+            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Value', 'tickformat': ',.0f'},
+            barmode='group',
+            legend=dict(orientation='h', xanchor='right', x=1, y=-0.2)
+        )
+        graphs.append(dcc.Graph(figure=go.Figure(data=traces, layout=layout)))
+    else:  # separate view
+        for dataset in data_toggle:
+            df = data_map[dataset]
+            traces = create_traces(df, dataset, {'dash': 'solid'})
+            layout = go.Layout(
+                title=f'Charging Infrastructure Data ({dataset})',
+                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Value', 'tickformat': ',.0f'},
+                barmode='group',
+                legend=dict(orientation='h', xanchor='right', x=1, y=-0.2)
+            )
+            graphs.append(dcc.Graph(figure=go.Figure(data=traces, layout=layout)))
+    return graphs
 
-    layout = go.Layout(title='Charging Infrastructure', xaxis={'title': 'Time of Day'}, yaxis={'title': 'Value (kWh)'})
-    return go.Figure(data=traces, layout=layout)
-
-# Callback for Cars tab to update graph based on selected car
+# Callback to update the graph in the Cars tab
 @app.callback(
-    Output('car-graph', 'figure'),
+    Output('car-graph-container', 'children'),
     [Input('car-dropdown', 'value'),
      Input('view-toggle-cars', 'value'),
      Input('graph-toggle-cars', 'value')]
 )
-def update_car_graph(selected_car, view, graphs):
-    df_selected = df1[df1['vehicle'] == selected_car]
-    df_selected2 = df2[df2['vehicle'] == selected_car]
-    traces = []
+def update_car_graph(selected_car, view_toggle, graph_toggle):
+    df1_filtered = df1[df1['vehicle'] == selected_car]
+    df2_filtered = df2[df2['vehicle'] == selected_car]
 
     def create_traces(df, dataset_name, line_style):
         trace_list = []
-        if 'total_energy' in graphs:
-            total_energy = df.groupby('half_hour')['cp_charging_rate'].sum()
-            trace_list.append(go.Scatter(x=total_energy.index, y=total_energy, mode='lines', name=f'{dataset_name} - Total Energy Used', line=line_style))
-        if 'soc' in graphs:
-            soc = df.groupby('half_hour')['vehicle_charge'].mean()
+        if 'total_energy' in graph_toggle:
+            df_sorted = df.sort_values(by='time_of_day')
+            total_energy = df_sorted.groupby('time_of_day')['cp_charging_rate'].sum().cumsum()
+            trace_list.append(go.Bar(x=total_energy.index, y=total_energy, name=f'{dataset_name} - Cumulative Total Energy Used'))
+        if 'soc' in graph_toggle:
+            soc = df.groupby('time_of_day')['vehicle_soc'].mean()
             trace_list.append(go.Scatter(x=soc.index, y=soc, mode='lines', name=f'{dataset_name} - State of Charge', line=line_style))
-        if 'target_power' in graphs:
-            target_power = df.groupby('half_hour')['cp_target_power'].mean()
+        if 'target_power' in graph_toggle:
+            target_power = df.groupby('time_of_day')['cp_target_power'].mean()
             trace_list.append(go.Scatter(x=target_power.index, y=target_power, mode='lines', name=f'{dataset_name} - CP Target Power', line=line_style))
-        if 'charging_rate' in graphs:
-            charging_rate = df.groupby('half_hour')['cp_charging_rate'].mean()
+        if 'charging_rate' in graph_toggle:
+            charging_rate = df.groupby('time_of_day')['cp_charging_rate'].mean()
             trace_list.append(go.Scatter(x=charging_rate.index, y=charging_rate, mode='lines', name=f'{dataset_name} - CP Charging Rate', line=line_style))
         return trace_list
 
-    if view == 'combined':
-        traces.extend(create_traces(df_selected, 'Dataset 1', {'dash': 'solid'}))
-        traces.extend(create_traces(df_selected2, 'Dataset 2', {'dash': 'solid'}))
-    else:
-        traces.extend(create_traces(df_selected, 'Dataset 1', {'dash': 'solid'}))
-        traces.extend(create_traces(df_selected2, 'Dataset 2', {'dash': 'dot'}))
+    graphs = []
+    if view_toggle == 'combined':
+        traces = create_traces(df1_filtered, 'Dataset 1', {'dash': 'solid'}) + create_traces(df2_filtered, 'Dataset 2', {'dash': 'solid'})
+        layout = go.Layout(
+            title=f'Car Data for {selected_car}',
+            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Value', 'tickformat': ',.0f'},
+            barmode='group',
+            legend=dict(orientation='h', xanchor='right', x=1, y=-0.2)
+        )
+        graphs.append(dcc.Graph(figure=go.Figure(data=traces, layout=layout)))
+    else:  # separate view
+        traces1 = create_traces(df1_filtered, 'Dataset 1', {'dash': 'solid'})
+        traces2 = create_traces(df2_filtered, 'Dataset 2', {'dash': 'dot'})
+        layout1 = go.Layout(
+            title=f'Car Data for {selected_car} (Dataset 1)',
+            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Value', 'tickformat': ',.0f'},
+            barmode='group',
+            legend=dict(orientation='h', xanchor='right', x=1, y=-0.2)
+        )
+        layout2 = go.Layout(
+            title=f'Car Data for {selected_car} (Dataset 2)',
+            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Value', 'tickformat': ',.0f'},
+            barmode='group',
+            legend=dict(orientation='h', xanchor='right', x=1, y=-0.2)
+        )
+        graphs.append(dcc.Graph(figure=go.Figure(data=traces1, layout=layout1)))
+        graphs.append(dcc.Graph(figure=go.Figure(data=traces2, layout=layout2)))
+    return graphs
 
-    layout = go.Layout(title='Car Data', xaxis={'title': 'Time of Day'}, yaxis={'title': 'Value (kWh)'})
-    return go.Figure(data=traces, layout=layout)
-
-# Callback for Charging Station tab to update graph based on selected station
+# Callback to update the graph in the Charging Station tab
 @app.callback(
-    Output('station-graph', 'figure'),
+    Output('station-graph-container', 'children'),
     [Input('station-dropdown', 'value'),
      Input('view-toggle-stations', 'value'),
      Input('graph-toggle-stations', 'value')]
 )
-def update_station_graph(selected_station, view, graphs):
-    df_selected = df1[df1['cp'] == selected_station]
-    df_selected2 = df2[df2['cp'] == selected_station]
-    traces = []
+def update_station_graph(selected_station, view_toggle, graph_toggle):
+    df1_filtered = df1[df1['cp'] == selected_station]
+    df2_filtered = df2[df2['cp'] == selected_station]
 
     def create_traces(df, dataset_name, line_style):
         trace_list = []
-        if 'total_energy' in graphs:
-            total_energy = df.groupby('half_hour')['cp_charging_rate'].sum()
-            trace_list.append(go.Scatter(x=total_energy.index, y=total_energy, mode='lines', name=f'{dataset_name} - Total Energy Delivered', line=line_style))
-        if 'target_power' in graphs:
-            target_power = df.groupby('half_hour')['cp_target_power'].mean()
-            trace_list.append(go.Scatter(x=target_power.index, y=target_power, mode='lines', name=f'{dataset_name} - Target Power', line=line_style))
-        if 'charging_rate' in graphs:
-            charging_rate = df.groupby('half_hour')['cp_charging_rate'].mean()
-            trace_list.append(go.Scatter(x=charging_rate.index, y=charging_rate, mode='lines', name=f'{dataset_name} - Charging Rate', line=line_style))
+        if 'total_energy' in graph_toggle:
+            df_sorted = df.sort_values(by='time_of_day')
+            total_energy = df_sorted.groupby('time_of_day')['cp_charging_rate'].sum().cumsum()
+            trace_list.append(go.Bar(x=total_energy.index, y=total_energy, name=f'{dataset_name} - Cumulative Total Energy Used'))
+        if 'target_power' in graph_toggle:
+            target_power = df.groupby('time_of_day')['cp_target_power'].mean()
+            trace_list.append(go.Scatter(x=target_power.index, y=target_power, mode='lines', name=f'{dataset_name} - CP Target Power', line=line_style))
+        if 'charging_rate' in graph_toggle:
+            charging_rate = df.groupby('time_of_day')['cp_charging_rate'].mean()
+            trace_list.append(go.Scatter(x=charging_rate.index, y=charging_rate, mode='lines', name=f'{dataset_name} - CP Charging Rate', line=line_style))
         return trace_list
 
-    if view == 'combined':
-        traces.extend(create_traces(df_selected, 'Dataset 1', {'dash': 'solid'}))
-        traces.extend(create_traces(df_selected2, 'Dataset 2', {'dash': 'solid'}))
-    else:
-        traces.extend(create_traces(df_selected, 'Dataset 1', {'dash': 'solid'}))
-        traces.extend(create_traces(df_selected2, 'Dataset 2', {'dash': 'dot'}))
-
-    layout = go.Layout(title='Charging Station Data', xaxis={'title': 'Time of Day'}, yaxis={'title': 'Value (kWh)'})
-    return go.Figure(data=traces, layout=layout)
+    graphs = []
+    if view_toggle == 'combined':
+        traces = create_traces(df1_filtered, 'Dataset 1', {'dash': 'solid'}) + create_traces(df2_filtered, 'Dataset 2', {'dash': 'solid'})
+        layout = go.Layout(
+            title=f'Charging Station Data for {selected_station}',
+            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Value', 'tickformat': ',.0f'},
+            barmode='group',
+            legend=dict(orientation='h', xanchor='right', x=1, y=-0.2)
+        )
+        graphs.append(dcc.Graph(figure=go.Figure(data=traces, layout=layout)))
+    else:  # separate view
+        traces1 = create_traces(df1_filtered, 'Dataset 1', {'dash': 'solid'})
+        traces2 = create_traces(df2_filtered, 'Dataset 2', {'dash': 'dot'})
+        layout1 = go.Layout(
+            title=f'Charging Station Data for {selected_station} (Dataset 1)',
+            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Value', 'tickformat': ',.0f'},
+            barmode='group',
+            legend=dict(orientation='h', xanchor='right', x=1, y=-0.2)
+        )
+        layout2 = go.Layout(
+            title=f'Charging Station Data for {selected_station} (Dataset 2)',
+            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Value', 'tickformat': ',.0f'},
+            barmode='group',
+            legend=dict(orientation='h', xanchor='right', x=1, y=-0.2)
+        )
+        graphs.append(dcc.Graph(figure=go.Figure(data=traces1, layout=layout1)))
+        graphs.append(dcc.Graph(figure=go.Figure(data=traces2, layout=layout2)))
+    return graphs
 
 # Run the app
 if __name__ == '__main__':
