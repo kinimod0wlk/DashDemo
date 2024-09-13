@@ -14,7 +14,7 @@ GRID_LIMIT = 150
 def preprocess(df):
     df['time'] = df['time'].astype(int)
     df['vehicle'] = df['vehicle'].str.replace(',', '.').astype(float)
-    df = df.dropna(subset=['vehicle'])
+    df = df.dropna(subset=['vehicle']).copy()
     df['vehicle'] = df['vehicle'].astype(int)
     df['cp_charging_rate'] = df['cp_charging_rate'].str.replace(',', '.').astype(float)
     df['cp_target_power'] = df['cp_target_power'].str.replace(',', '.').astype(float)
@@ -545,7 +545,7 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
             traces = create_traces(df1_filtered, 'Run 1', {'dash': 'solid'}) + create_traces(df2_filtered, 'Run 2', {'dash': 'solid'})
             layout = go.Layout(
                 title={
-                    'text': f'Power Consumption EV{selected_car}',
+                    'text': f'Power Consumption EV {selected_car}',
                     'font': {
                         'size': 24
                     }
