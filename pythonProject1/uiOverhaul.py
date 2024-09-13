@@ -13,7 +13,9 @@ GRID_LIMIT = 150
 
 def preprocess(df):
     df['time'] = df['time'].astype(int)
-    df['vehicle'] = df['vehicle'].astype(str)
+    df['vehicle'] = df['vehicle'].str.replace(',', '.').astype(float)
+    df = df.dropna(subset=['vehicle'])
+    df['vehicle'] = df['vehicle'].astype(int)
     df['cp_charging_rate'] = df['cp_charging_rate'].str.replace(',', '.').astype(float)
     df['cp_target_power'] = df['cp_target_power'].str.replace(',', '.').astype(float)
     df['vehicle_soc'] = df['vehicle_soc'].str.replace(',', '.').astype(float)
@@ -207,8 +209,8 @@ charging_station_layout = html.Div(children=[
             html.H3('Selected Charging Station'),
             dcc.Dropdown(
                 id='station-dropdown',
-                options=[{'label': station, 'value': station} for station in df1['cp'].unique()],
-                value=df1['cp'].unique()[0],
+                options=[{'label': station, 'value': station} for station in sorted(df1['cp'].unique())],
+                value=sorted(df1['cp'].unique())[0],
                 className='station-dropdown'
             ),
             html.Hr(style={'border': '1px solid white', 'margin-top': '20px', 'margin-bottom': '20px'}),
@@ -353,9 +355,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
             traces.extend(create_traces(df, name, {'dash': 'solid'}))
 
         layout = go.Layout(
-            title='Charging Infrastructure Data',
-            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-            yaxis={'title': 'Energy in kW', 'tickformat': ',.0f'},
+            title='Power Consumption',
+            xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
             barmode='group',
             plot_bgcolor='rgba(74, 74, 74, 1)',
             paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -374,9 +376,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
                 total_energy_traces.append(total_energy_trace)
 
             energy_layout = go.Layout(
-                title='Total Energy Used',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                yaxis={'title': 'Energy used in kWh', 'tickformat': ',.0f'},
+                title='Energy Used',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
                 paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -395,9 +397,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
                 charging_cars_traces.append(cars_charging_trace)
 
             cars_layout = go.Layout(
-                title='Number of Cars Currently Charging',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                yaxis={'title': 'Number of Cars'},
+                title='Number of EVs Charging',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Number of EVs'},
                 plot_bgcolor='rgba(74, 74, 74, 1)',
                 paper_bgcolor='rgba(44, 44, 44, 1)',
                 font=dict(color='white'),
@@ -413,9 +415,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
             name = 'Run 1' if dataset == 'df1' else 'Run 2'
             traces = create_traces(df, name, {'dash': 'solid'})
             layout = go.Layout(
-                title=f'Charging Infrastructure Data ({name})',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                yaxis={'title': 'Energy in kW', 'tickformat': ',.0f'},
+                title=f'Power Consumption in ({name})',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
                 paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -432,9 +434,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
                 name = 'Run 1' if dataset == 'df1' else 'Run 2'
                 total_energy_trace = create_traces_total_energy(df, name)
                 energy_layout = go.Layout(
-                    title=f'Total Energy Used in {name}',
-                    xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                    yaxis={'title': 'Energy used in kWh', 'tickformat': ',.0f'},
+                    title=f'Energy Used in {name}',
+                    xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                    yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                     barmode='group',
                     plot_bgcolor='rgba(74, 74, 74, 1)',
                     paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -451,9 +453,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
                 name = 'Run 1' if dataset == 'df1' else 'Run 2'
                 cars_charging_trace = create_traces_cars_charging(df, name)
                 cars_layout = go.Layout(
-                    title=f'Number of Cars Currently Charging in {name}',
-                    xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                    yaxis={'title': 'Number of Cars'},
+                    title=f'Number of EVs Charging in {name}',
+                    xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                    yaxis={'title': 'Number of EVs'},
                     plot_bgcolor='rgba(74, 74, 74, 1)',
                     paper_bgcolor='rgba(44, 44, 44, 1)',
                     font=dict(color='white'),
@@ -512,9 +514,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
         if 'target_power' in graph_toggle or 'charging_rate' in graph_toggle:
             traces = create_traces(df1_filtered, 'Run 1', {'dash': 'solid'}) + create_traces(df2_filtered, 'Run 2', {'dash': 'solid'})
             layout = go.Layout(
-                title=f'Data for Car {selected_car}',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                yaxis={'title': 'Energy in kW', 'tickformat': ',.0f'},
+                title=f'Power Consumption EV{selected_car}',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
                 paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -527,8 +529,8 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
         if 'soc' in graph_toggle:
             traces = create_traces_soc(df1_filtered, 'Run 1') + create_traces_soc(df2_filtered, 'Run 2')
             layout = go.Layout(
-                title=f'State of Charge for Car {selected_car}',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+                title=f'State of Charge EV {selected_car}',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'State of Charge (%)', 'tickformat': ',.0f', 'range': [0, 100]},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
@@ -543,9 +545,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
             traces = create_traces_total_energy(df1_filtered, 'Run 1') + create_traces_total_energy(df2_filtered, 'Run 2')
 
             energy_layout = go.Layout(
-                title=f'Energy Used by Car {selected_car}',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                yaxis={'title': 'Energy used in kWh', 'tickformat': ',.0f'},
+                title=f'Energy Used EV {selected_car}',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
                 paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -562,9 +564,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
             traces1 = create_traces(df1_filtered, 'Dataset 1', {'dash': 'solid'})
             traces2 = create_traces(df2_filtered, 'Dataset 2', {'dash': 'solid'})
             layout1 = go.Layout(
-                title=f'Data for Car {selected_car} (Run 1)',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                yaxis={'title': 'Energy in kW', 'tickformat': ',.0f'},
+                title=f'Power Consumption EV {selected_car} (Run 1)',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
                 paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -573,9 +575,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 hovermode='x unified'
             )
             layout2 = go.Layout(
-                title=f'Data for Car {selected_car} (Run 2)',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                yaxis={'title': 'Energy in kW', 'tickformat': ',.0f'},
+                title=f'Power Consumption EV {selected_car} (Run 2)',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
                 paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -590,8 +592,8 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
             traces3 = create_traces_soc(df1_filtered, 'Run 1')
             traces4 = create_traces_soc(df2_filtered, 'Run 2')
             layout3 = go.Layout(
-                title=f'State of Charge for Car {selected_car} (Run 1)',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+                title=f'State of Charge EV {selected_car} (Run 1)',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'State of Charge (%)', 'tickformat': ',.0f', 'range': [0, 100]},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
@@ -601,8 +603,8 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 hovermode='x unified'
             )
             layout4 = go.Layout(
-                title=f'State of Charge for Car {selected_car} (Run 2)',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
+                title=f'State of Charge EV {selected_car} (Run 2)',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'State of Charge (%)', 'tickformat': ',.0f', 'range': [0, 100]},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
@@ -619,9 +621,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
             traces6 = create_traces_total_energy(df2_filtered, 'Run 2')
 
             layout5 = go.Layout(
-                title=f'Energy Used by Car {selected_car} (Run 1)',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                yaxis={'title': 'Energy used in kWh', 'tickformat': ',.0f'},
+                title=f'Energy Used EV {selected_car} (Run 1)',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
                 paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -630,9 +632,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 hovermode='x unified'
             )
             layout6 = go.Layout(
-                title=f'Energy Used by Car {selected_car} (Run 2)',
-                xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-                yaxis={'title': 'Energy used in kWh', 'tickformat': ',.0f'},
+                title=f'Energy Used EV {selected_car} (Run 2)',
+                xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+                yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                 barmode='group',
                 plot_bgcolor='rgba(74, 74, 74, 1)',
                 paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -675,9 +677,9 @@ def update_station_graph(selected_station, view_toggle, graph_toggle):
     if view_toggle == 'combined':
         traces = create_traces(df1_filtered, 'Run 1', {'dash': 'solid'}) + create_traces(df2_filtered, 'Run 2', {'dash': 'solid'})
         layout = go.Layout(
-            title=f'Charging Station Data for Station {selected_station}',
-            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-            yaxis={'title': 'kW', 'tickformat': ',.0f'},
+            title=f'Power Usage of Charging Station {selected_station}',
+            xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
             barmode='group',
             plot_bgcolor='rgba(74, 74, 74, 1)',
             paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -690,9 +692,9 @@ def update_station_graph(selected_station, view_toggle, graph_toggle):
         traces1 = create_traces(df1_filtered, 'Dataset 1', {'dash': 'solid'})
         traces2 = create_traces(df2_filtered, 'Dataset 2', {'dash': 'solid'})
         layout1 = go.Layout(
-            title=f'Charging Station Data for {selected_station} (Run 1)',
-            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-            yaxis={'title': 'kW', 'tickformat': ',.0f'},
+            title=f'Power Usage of Charging Station {selected_station} (Run 1)',
+            xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
             barmode='group',
             plot_bgcolor='rgba(74, 74, 74, 1)',
             paper_bgcolor='rgba(44, 44, 44, 1)',
@@ -701,9 +703,9 @@ def update_station_graph(selected_station, view_toggle, graph_toggle):
             hovermode='x unified'
         )
         layout2 = go.Layout(
-            title=f'Charging Station Data for {selected_station} (Run 2)',
-            xaxis={'title': 'Time of Day', 'tickformat': '%H:%M'},
-            yaxis={'title': 'kW', 'tickformat': ',.0f'},
+            title=f'Power Usage of Charging Station {selected_station} (Run 2)',
+            xaxis={'title': 'Time', 'tickformat': '%H:%M'},
+            yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
             barmode='group',
             plot_bgcolor='rgba(74, 74, 74, 1)',
             paper_bgcolor='rgba(44, 44, 44, 1)',

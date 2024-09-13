@@ -51,6 +51,7 @@ a:hover {
 
 .div-table{
     width: 90%;
+    max-width: 1000px;
     margin: 0 auto;
 }
 
@@ -76,7 +77,6 @@ a:hover {
 
 .station-dropdown .Select-option.is-focused, .station-dropdown .Select-option.is-selected {
     background-color: #444444;
-    color: white;
 }
 
 .station-dropdown .Select-placeholder, .station-dropdown .Select-value-label {
