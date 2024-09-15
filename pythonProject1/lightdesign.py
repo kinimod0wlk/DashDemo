@@ -3,7 +3,6 @@ from dash import dcc, html, dash_table
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
-import numpy as np
 
 # Load data from CSV files
 df1 = pd.read_csv('result1.csv', delimiter=';')
@@ -29,29 +28,10 @@ def preprocess(df):
 df1 = preprocess(df1)
 df2 = preprocess(df2)
 
-def calculate_kpis(df):
-    total_energy_used = df['cp_charge_increment'].sum()
-    cars_charged = df[df['vehicle_charge'] > 0]['vehicle'].nunique()
-    cars_not_charged = df[df['vehicle_charge'] == 0]['vehicle'].nunique()
-
-    # Filter cars that have the last 3 entries with cp_charge_increment, cp_charging_rate, and cp_target_power as zero
-    last_3_entries = df.groupby('vehicle').tail(3)
-    condition = (last_3_entries['cp_charge_increment'] == 0) & (last_3_entries['cp_charging_rate'] == 0) & (last_3_entries['cp_target_power'] == 0)
-    vehicles_stopped_charging = last_3_entries[condition].groupby('vehicle').filter(lambda x: len(x) == 3)['vehicle'].unique()
-
-    df_stopped_charging = df[df['vehicle'].isin(vehicles_stopped_charging)]
-    avg_soc_ac = df_stopped_charging.groupby('vehicle').tail(1)['vehicle_soc'].mean()
-    median_soc = df_stopped_charging.groupby('vehicle').tail(1)['vehicle_soc'].median()
-
-    first_entries = df.groupby('vehicle').head(1)
-    avg_soc_bc = first_entries['vehicle_soc'].mean()
-
-    return total_energy_used, cars_charged, cars_not_charged, avg_soc_ac, median_soc, avg_soc_bc
-
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
 
-# Base
+# Navigation Bar Layout
 app.layout = html.Div([
     html.Div([
         dcc.Link('Dashboard', href='/Dash', className='nav-link', id='link-dash'),
@@ -63,6 +43,7 @@ app.layout = html.Div([
     html.Div(id='page-content', style={'display': 'flex'})
 ])
 
+# Callback for Page Content Update
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
@@ -84,6 +65,7 @@ def display_page(pathname):
         ], style={'width': '100%'})
 
 
+# Callback for Active Button
 @app.callback(
     [Output('link-dash', 'className'),
      Output('link-charging', 'className'),
@@ -92,13 +74,11 @@ def display_page(pathname):
     [Input('url', 'pathname')]
 )
 def update_active_link(pathname):
-    # Define the default classes
     class_dash = 'nav-link'
     class_charging = 'nav-link'
     class_cars = 'nav-link'
     class_station = 'nav-link'
 
-    # Update the class of the active link
     if pathname == '/charging-infrastructure':
         class_charging = 'nav-link active'
     elif pathname == '/cars':
@@ -110,14 +90,14 @@ def update_active_link(pathname):
 
     return class_dash, class_charging, class_cars, class_station
 
-# Dashboard Layout
+# Dashboard Page Content Layout
 dashboard_layout = html.Div(
     children=[
     html.H1("Dashboard"),
     html.Div(id='kpis', className='div-table'),
 ])
 
-# Charging Infrastructure Layout
+# Charging Infrastructure Page Content Layout
 charging_infrastructure_layout = html.Div(
     children=[
     html.H1("Charging Infrastructure"),
@@ -133,7 +113,7 @@ charging_infrastructure_layout = html.Div(
                 value=['df1', 'df2'],
                 labelStyle={'display': 'block', 'margin-bottom': '10px', 'font-size': '18px'}
             ),
-            html.Hr(style={'border': '1px solid white', 'margin-top': '20px', 'margin-bottom': '20px'}),
+            html.Hr(style={'border': '1px solid lightgrey', 'margin-top': '20px', 'margin-bottom': '20px'}),
             html.H3('Dataset View'),
             dcc.RadioItems(
                 id='view-toggle-infrastructure',
@@ -144,7 +124,7 @@ charging_infrastructure_layout = html.Div(
                 value='combined',
                 labelStyle={'display': 'block', 'margin-bottom': '10px', 'font-size': '18px'}
             ),
-            html.Hr(style={'border': '1px solid white', 'margin-top': '20px', 'margin-bottom': '20px'}),
+            html.Hr(style={'border': '1px solid lightgrey', 'margin-top': '20px', 'margin-bottom': '20px'}),
             html.H3('Graph Options'),
             dcc.Checklist(
                 id='graph-toggle-infrastructure',
@@ -161,7 +141,7 @@ charging_infrastructure_layout = html.Div(
         html.Div(id='infrastructure-graph-container', className='div-for-charts'),
     ], style={'display': 'flex'})])
 
-# Cars Layuot
+# Cars Page Content Layout
 cars_layout = html.Div(
     children=[
     html.H1("Cars"),
@@ -174,7 +154,7 @@ cars_layout = html.Div(
                     value=df1['vehicle'].unique()[0],
                     className='station-dropdown'
                 ),
-                html.Hr(style={'border': '1px solid white', 'margin-top': '20px', 'margin-bottom': '20px'}),
+                html.Hr(style={'border': '1px solid lightgrey', 'margin-top': '20px', 'margin-bottom': '20px'}),
                 html.H3('Dataset View'),
                 dcc.RadioItems(
                     id='view-toggle-cars',
@@ -185,7 +165,7 @@ cars_layout = html.Div(
                     value='combined',
                     labelStyle={'display': 'block', 'margin-bottom': '10px', 'font-size': '18px'}
                 ),
-                html.Hr(style={'border': '1px solid white', 'margin-top': '20px', 'margin-bottom': '20px'}),
+                html.Hr(style={'border': '1px solid lightgrey', 'margin-top': '20px', 'margin-bottom': '20px'}),
                 html.H3('Graph Options'),
                 dcc.Checklist(
                     id='graph-toggle-cars',
@@ -201,7 +181,7 @@ cars_layout = html.Div(
             html.Div(id='car-graph-container', className='div-for-charts')], style={'display': 'flex'})
     ])
 
-# Charging Station Layout
+# Charging Station Page Content Layout
 charging_station_layout = html.Div(children=[
     html.H1("Charging Station"),
     html.Div(children=[
@@ -213,7 +193,7 @@ charging_station_layout = html.Div(children=[
                 value=sorted(df1['cp'].unique())[0],
                 className='station-dropdown'
             ),
-            html.Hr(style={'border': '1px solid white', 'margin-top': '20px', 'margin-bottom': '20px'}),
+            html.Hr(style={'border': '1px solid lightgrey', 'margin-top': '20px', 'margin-bottom': '20px'}),
             html.H3('Dataset View'),
             dcc.RadioItems(
                 id='view-toggle-stations',
@@ -224,12 +204,11 @@ charging_station_layout = html.Div(children=[
                 value='combined',
                 labelStyle={'display': 'block', 'margin-bottom': '10px', 'font-size': '18px'}
             ),
-            html.Hr(style={'border': '1px solid white', 'margin-top': '20px', 'margin-bottom': '20px'}),
+            html.Hr(style={'border': '1px solid lightgrey', 'margin-top': '20px', 'margin-bottom': '20px'}),
             html.H3('Graph Options'),
             dcc.Checklist(
                 id='graph-toggle-stations',
                 options=[
-#                    {'label': 'Total Energy Delivered', 'value': 'total_energy'},
                     {'label': 'Target Power over the Day', 'value': 'target_power'},
                     {'label': 'Charging Rate over the Day', 'value': 'charging_rate'}
                 ],
@@ -239,77 +218,87 @@ charging_station_layout = html.Div(children=[
         html.Div(id='station-graph-container', className='div-for-charts')], style={'display': 'flex'})
 ])
 
-base = html.Div(children=[
-                      html.Div(className='row',
-                               children=[
-                                  html.Div(className='four columns div-user-controls',
-                                           children=[
-                                           html.H1('test')]),  # User
-                                  html.Div(className='eight columns div-for-charts bg-grey',
-                                           children=[
-                                               html.H1('test')]
-                               )  # Graph
-                                  ])
-                                ])
-
-
+#Callback to calculate KPIs of dataframes when navigating to page
 @app.callback(Output('kpis', 'children'),
               Input('url', 'pathname'))
 def update_kpis(pathname):
+    def calculate_kpis(df):
+        total_energy_used = df['cp_charge_increment'].sum()
+        cars_charged = df[df['vehicle_charge'] > 0]['vehicle'].nunique()
+        cars_not_charged = df[df['vehicle_charge'] == 0]['vehicle'].nunique()
+
+        # Filter cars that have the last 3 entries with cp_charge_increment, cp_charging_rate, and cp_target_power as zero
+        last_3_entries = df.groupby('vehicle').tail(3)
+        condition = (last_3_entries['cp_charge_increment'] == 0) & (last_3_entries['cp_charging_rate'] == 0) & (
+                    last_3_entries['cp_target_power'] == 0)
+        vehicles_stopped_charging = last_3_entries[condition].groupby('vehicle').filter(lambda x: len(x) == 3)[
+            'vehicle'].unique()
+
+        df_stopped_charging = df[df['vehicle'].isin(vehicles_stopped_charging)]
+        avg_soc_ac = df_stopped_charging.groupby('vehicle').tail(1)['vehicle_soc'].mean()
+        median_soc = df_stopped_charging.groupby('vehicle').tail(1)['vehicle_soc'].median()
+
+        first_entries = df.groupby('vehicle').head(1)
+        avg_soc_bc = first_entries['vehicle_soc'].mean()
+
+        return total_energy_used, cars_charged, cars_not_charged, avg_soc_ac, median_soc, avg_soc_bc
+
     total_energy_1, cars_charged_1, cars_not_charged_1, avg_soc_ac_1, median_soc_1, avg_soc_bc_1 = calculate_kpis(df1)
     total_energy_2, cars_charged_2, cars_not_charged_2, avg_soc_ac_2, median_soc_2, avg_soc_bc_2 = calculate_kpis(df2)
 
     return dash_table.DataTable(
-    data = [
-        {'KPI': 'Total Energy Used (kWh)', 'Dataset 1': round(total_energy_1,2), 'Dataset 2': round(total_energy_2,2)},
-        {'KPI': 'Cars Charged', 'Dataset 1': cars_charged_1, 'Dataset 2': cars_charged_2},
-        {'KPI': 'Cars Not Charged', 'Dataset 1': cars_not_charged_1, 'Dataset 2': cars_not_charged_2},
-        {'KPI': 'Average SoC before Charging', 'Dataset 1': round(avg_soc_bc_1,3), 'Dataset 2': round(avg_soc_bc_2,3)},
-        {'KPI': 'Average SoC after Charging', 'Dataset 1': round(avg_soc_ac_1,4), 'Dataset 2': round(avg_soc_ac_2,4)},
-#        {'KPI': 'Median SoC', 'Dataset 1': median_soc_1, 'Dataset 2': median_soc_2},
-    ],
-    columns = [
-        {'name': 'KPI', 'id': 'KPI'},
-        {'name': 'Dataset 1', 'id': 'Dataset 1'},
-        {'name': 'Dataset 2', 'id': 'Dataset 2'}
-    ],
-    style_header = {
-        'backgroundColor': 'rgb(30, 30, 30)',
-        'color': 'white',
-        'fontWeight': 'bold',
-        'border': '1px solid black',
-    },
-    style_cell = {
-        'backgroundColor': 'rgb(50, 50, 50)',
-        'color': 'white',
-        'textAlign': 'left',
-        'padding': '10px',
-        'border': '1px solid black',
-    },
-    style_data = {
-        'border': '1px solid grey',
-    },
-    style_table = {
-        'borderRadius': '5px',
-        'overflow': 'hidden',
-        'margin': 'auto',
-    },
-    style_as_list_view = True,
+        data=[
+            {'KPI': 'Total Energy Used (kWh)', 'Dataset 1': round(total_energy_1, 2),
+             'Dataset 2': round(total_energy_2, 2)},
+            {'KPI': 'Cars Charged', 'Dataset 1': cars_charged_1, 'Dataset 2': cars_charged_2},
+            {'KPI': 'Cars Not Charged', 'Dataset 1': cars_not_charged_1, 'Dataset 2': cars_not_charged_2},
+            {'KPI': 'Average SoC before Charging', 'Dataset 1': round(avg_soc_bc_1, 3),
+             'Dataset 2': round(avg_soc_bc_2, 3)},
+            {'KPI': 'Average SoC after Charging', 'Dataset 1': round(avg_soc_ac_1, 4),
+             'Dataset 2': round(avg_soc_ac_2, 4)},
+        ],
+        columns=[
+            {'name': 'KPI', 'id': 'KPI'},
+            {'name': 'Dataset 1', 'id': 'Dataset 1'},
+            {'name': 'Dataset 2', 'id': 'Dataset 2'}
+        ],
+        style_header={
+            'backgroundColor': 'rgb(240, 240, 240)',
+            'color': 'black',
+            'fontWeight': 'bold',
+            'border': '1px rgb(240, 240, 240)',
+        },
+        style_cell={
+            'backgroundColor': 'rgb(255, 255, 255)',
+            'color': 'black',
+            'textAlign': 'left',
+            'padding': '10px',
+            'border': '1px solid white',
+        },
+        style_data={
+            'border': '1px solid white',
+        },
+        style_table={
+            'borderRadius': '5px',
+            'overflow': 'hidden',
+            'margin': 'auto',
+        },
+        style_as_list_view=True,
         style_data_conditional=[
             {
                 'if': {'state': 'selected'},
-                'backgroundColor': 'rgb(70, 70, 70)',
-                'color': 'white'
+                'backgroundColor': 'rgb(200, 230, 255)',
+                'color': 'black'
             },
             {
                 'if': {'state': 'active'},
-                'backgroundColor': 'rgb(90, 90, 90)',
-                'color': 'white'
+                'backgroundColor': 'rgb(220, 240, 255)',
+                'color': 'black'
             }
         ]
     )
 
-
+#Callback to update infrastructure graph container when navigated to or user input changed
 @app.callback(Output('infrastructure-graph-container', 'children'),
               [Input('data-toggle-infrastructure', 'value'),
                Input('view-toggle-infrastructure', 'value'),
@@ -320,6 +309,7 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
     total_energy_traces = []
     charging_cars_traces = []
 
+    #Creates traces for selected options from user input checkboxes
     def create_traces(df, dataset_name, line_style):
         trace_list = []
         if 'target_power' in graph_toggle:
@@ -364,9 +354,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
             xaxis={'title': 'Time', 'tickformat': '%H:%M'},
             yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
             barmode='group',
-            plot_bgcolor='rgba(74, 74, 74, 1)',
-            paper_bgcolor='rgba(44, 44, 44, 1)',
-            font=dict(color='white'),
+            plot_bgcolor='rgba(240, 240, 240, 1)',
+            paper_bgcolor='rgba(255, 255, 255, 1)',
+            font=dict(color='black'),
             legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
             hovermode='x unified'
         )
@@ -390,9 +380,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -415,9 +405,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
                 },
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'Number of EVs'},
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -439,9 +429,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -463,9 +453,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
                     xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                     yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                     barmode='group',
-                    plot_bgcolor='rgba(74, 74, 74, 1)',
-                    paper_bgcolor='rgba(44, 44, 44, 1)',
-                    font=dict(color='white'),
+                    plot_bgcolor='rgba(240, 240, 240, 1)',
+                    paper_bgcolor='rgba(255, 255, 255, 1)',
+                    font=dict(color='black'),
                     legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                     hovermode='x unified'
                 )
@@ -486,9 +476,9 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
                     },
                     xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                     yaxis={'title': 'Number of EVs'},
-                    plot_bgcolor='rgba(74, 74, 74, 1)',
-                    paper_bgcolor='rgba(44, 44, 44, 1)',
-                    font=dict(color='white'),
+                    plot_bgcolor='rgba(240, 240, 240, 1)',
+                    paper_bgcolor='rgba(255, 255, 255, 1)',
+                    font=dict(color='black'),
                     legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                     hovermode='x unified'
                 )
@@ -497,7 +487,7 @@ def update_infrastructure_graph(data_toggle, view_toggle, graph_toggle):
 
     return graphs
 
-
+#Callback to update car graph container when navigated to or user input changed
 @app.callback(
     Output('car-graph-container', 'children'),
     [Input('car-dropdown', 'value'),
@@ -510,13 +500,6 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
 
     def create_traces(df, dataset_name, line_style):
         trace_list = []
-        # if 'total_energy' in graph_toggle:
-        #     df_sorted = df.sort_values(by='time_of_day')
-        #     total_energy = df_sorted.groupby('time_of_day')['cp_charge_increment'].sum().cumsum()
-        #     trace_list.append(go.Scatter(x=total_energy.index, y=total_energy, line_shape='hv', name=f'{dataset_name} - Cumulative Total Energy Used', mode='lines'))
-        # if 'soc' in graph_toggle:
-        #     soc = df.groupby('time_of_day')['vehicle_soc'].mean()
-        #     trace_list.append(go.Scatter(x=soc.index, y=soc, mode='lines', line_shape='hv', name=f'{dataset_name} - State of Charge', line=line_style))
         if 'target_power' in graph_toggle:
             target_power = df.groupby('time_of_day')['cp_target_power'].mean()
             trace_list.append(go.Scatter(x=target_power.index, y=target_power, line_shape='hv', mode='lines', name=f'{dataset_name} - CP Target Power', line=line_style))
@@ -553,9 +536,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -573,9 +556,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'State of Charge (%)', 'tickformat': ',.0f', 'range': [0, 100]},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -594,9 +577,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -618,9 +601,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -634,9 +617,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -656,9 +639,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'State of Charge (%)', 'tickformat': ',.0f', 'range': [0, 100]},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -672,9 +655,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'State of Charge (%)', 'tickformat': ',.0f', 'range': [0, 100]},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -695,9 +678,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -711,9 +694,9 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
                 xaxis={'title': 'Time', 'tickformat': '%H:%M'},
                 yaxis={'title': 'Energy (kWh)', 'tickformat': ',.0f'},
                 barmode='group',
-                plot_bgcolor='rgba(74, 74, 74, 1)',
-                paper_bgcolor='rgba(44, 44, 44, 1)',
-                font=dict(color='white'),
+                plot_bgcolor='rgba(240, 240, 240, 1)',
+                paper_bgcolor='rgba(255, 255, 255, 1)',
+                font=dict(color='black'),
                 legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
                 hovermode='x unified'
             )
@@ -724,6 +707,7 @@ def update_car_graph(selected_car, view_toggle, graph_toggle):
 
     return graphs
 
+#Callback to update station graph container when navigated to or user input changed
 @app.callback(
     Output('station-graph-container', 'children'),
     [Input('station-dropdown', 'value'),
@@ -736,10 +720,6 @@ def update_station_graph(selected_station, view_toggle, graph_toggle):
 
     def create_traces(df, dataset_name, line_style):
         trace_list = []
-        # if 'total_energy' in graph_toggle:
-        #     df_sorted = df.sort_values(by='time_of_day')
-        #     total_energy = df_sorted.groupby('time_of_day')['cp_charge_increment'].sum().cumsum()
-        #     trace_list.append(go.Scatter(x=total_energy.index, y=total_energy, name=f'{dataset_name} - Cumulative Total Energy Used', mode='lines'))
         if 'target_power' in graph_toggle:
             target_power = df.groupby('time_of_day')['cp_target_power'].mean()
             trace_list.append(go.Scatter(x=target_power.index, y=target_power, mode='lines', line_shape='hv', name=f'{dataset_name} - CP Target Power', line=line_style))
@@ -761,9 +741,9 @@ def update_station_graph(selected_station, view_toggle, graph_toggle):
             xaxis={'title': 'Time', 'tickformat': '%H:%M'},
             yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
             barmode='group',
-            plot_bgcolor='rgba(74, 74, 74, 1)',
-            paper_bgcolor='rgba(44, 44, 44, 1)',
-            font=dict(color='white'),
+            plot_bgcolor='rgba(240, 240, 240, 1)',
+            paper_bgcolor='rgba(255, 255, 255, 1)',
+            font=dict(color='black'),
             legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
             hovermode='x unified'
         )
@@ -781,9 +761,9 @@ def update_station_graph(selected_station, view_toggle, graph_toggle):
             xaxis={'title': 'Time', 'tickformat': '%H:%M'},
             yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
             barmode='group',
-            plot_bgcolor='rgba(74, 74, 74, 1)',
-            paper_bgcolor='rgba(44, 44, 44, 1)',
-            font=dict(color='white'),
+            plot_bgcolor='rgba(240, 240, 240, 1)',
+            paper_bgcolor='rgba(255, 255, 255, 1)',
+            font=dict(color='black'),
             legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
             hovermode='x unified'
         )
@@ -797,9 +777,9 @@ def update_station_graph(selected_station, view_toggle, graph_toggle):
             xaxis={'title': 'Time', 'tickformat': '%H:%M'},
             yaxis={'title': 'Power (kW)', 'tickformat': ',.0f'},
             barmode='group',
-            plot_bgcolor='rgba(74, 74, 74, 1)',
-            paper_bgcolor='rgba(44, 44, 44, 1)',
-            font=dict(color='white'),
+            plot_bgcolor='rgba(240, 240, 240, 1)',
+            paper_bgcolor='rgba(255, 255, 255, 1)',
+            font=dict(color='black'),
             legend=dict(orientation='h', xanchor='right', x=1, y=-0.2),
             hovermode='x unified'
         )
